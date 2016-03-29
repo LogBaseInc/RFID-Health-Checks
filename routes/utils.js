@@ -19,26 +19,32 @@ var dynamodb = new AWS.DynamoDB({apiVersion: 'latest'});
 var DYNAMODB_BATCH_WRITE_LIMIT = 20;
 
 module.exports = {
-    log: function(message, tags) {
+
+    log: function (message, tags) {
         client.log(message, tags);
         return;
     },
 
-    batchWrite: function (product_list, complete, callback, table_name) {
+    batchWrite: function(product_list, complete, res) {
         var params = {};
         params['RequestItems'] = {};
-        params.RequestItems[table_name] = product_list;
+        params.RequestItems[DYNAMODB_PRODUCTS_TABLE_NAME] = product_list;
 
         dynamodb.batchWriteItem(params, function (err, data) {
             if (err) {
                 console.log(err);
-                callback(err.message);
+                res.status(400).send(err.message);
                 return;
             } else {
                 if (complete) {
+                    res.status(200).send();
                     return;
                 }
             }
         });
+    },
+
+    getDynamoDBBatchWriteLimit : function() {
+        return DYNAMODB_BATCH_WRITE_LIMIT;
     }
 };
