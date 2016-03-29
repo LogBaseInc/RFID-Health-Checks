@@ -1,0 +1,6 @@
+
+npm-debug*
+.config
+node_modules/*
+.idea/*
+*.iml
