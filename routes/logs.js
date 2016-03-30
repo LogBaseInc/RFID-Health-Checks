@@ -3,8 +3,42 @@ var router = express.Router();
 
 var utils = require("./utils.js");
 require('datejs');
+var multer  = require('multer');
+var upload = multer({dest: 'uploads/'});
+var azure = require('azure-storage');
+
+var azure_account = process.env.AZURE_STORAGE_ACCOUNT;
+var azure_key = process.env.AZURE_STORAGE_ACCESS_KEY;
+var azure_connection_string = process.env.AZURE_STORAGE_CONNECTION_STRING;
 
 var RFID_LOGS_TABLE_NAME = "RFID-HEALTH-CHECK-LOGS";
+
+/* Upload file. */
+router.post('/upload/:accountid', upload.single('file'), function(req, res) {
+    var accountid = req.params.accountid || " ";
+    console.log(accountid, req.file.path);
+    try
+    {
+        var blobService = azure.createBlobService();
+
+        blobService.createBlockBlobFromLocalFile('rfid', accountid+'.txt', req.file.path, function(error, result, response) {
+          if (!error) {
+            // file uploaded
+            res.status(200).send();
+          }
+          else{
+            console.log(error);
+            res.status(400).send({"error" : error});
+          }
+
+        });
+    }
+    catch(ex){
+        console.log(ex);
+        res.status(400).send({"error" : error});
+    }
+    return;
+});
 
 /* GET home page. */
 router.post('/:accountid/:deviceid', function(req, res, next) {
