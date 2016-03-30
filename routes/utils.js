@@ -25,10 +25,10 @@ module.exports = {
         return;
     },
 
-    batchWrite: function(product_list, complete, res) {
+    batchWrite: function(productList, complete, res, tableName) {
         var params = {};
         params['RequestItems'] = {};
-        params.RequestItems[DYNAMODB_PRODUCTS_TABLE_NAME] = product_list;
+        params.RequestItems[tableName] = productList;
 
         dynamodb.batchWriteItem(params, function (err, data) {
             if (err) {

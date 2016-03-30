@@ -2,12 +2,14 @@ var express = require('express');
 var router = express.Router();
 
 var utils = require("./utils.js");
+require('datejs');
 
 var RFID_LOGS_TABLE_NAME = "RFID-HEALTH-CHECK-LOGS";
 
 /* GET home page. */
-router.post('/:accountid', function(req, res, next) {
+router.post('/:accountid/:deviceid', function(req, res, next) {
     var accountId = req.params.accountid;
+    var deviceId = req.params.deviceid;
     var items = req.body;
 
     if (items.length == 0) {
@@ -15,13 +17,13 @@ router.post('/:accountid', function(req, res, next) {
         return;
     }
 
-    processItems(items, res, accountId);
+    processItems(items, res, accountId, deviceId);
     return;
 });
 
 module.exports = router;
 
-function processItems(items, res, accountId) {
+function processItems(items, res, accountId, deviceId) {
 
     var item_list = [];
     for (var idx in items) {
@@ -45,8 +47,16 @@ function processItems(items, res, accountId) {
         var exceptionI = tokens[10] || "nil";
         var exceptionII = tokens[11] || "nil";
 
+        var dateInt = Date.parse(date);
+        var dateString = "";
+
+        if (dateInt != null && dateInt != undefined) {
+            dateString = dateInt.toString("yyyy-MM-dd");
+            console.log(dateString);
+        }
+
         /*
-         * Fill in the customer details to update
+         * Fill in the item details to update
          */
         var item_details = {
             device: { 'S': device },
@@ -61,8 +71,9 @@ function processItems(items, res, accountId) {
             inCycleCount: { 'S': inCycleCount},
             exceptionI: { 'S': exceptionI},
             exceptionII: { 'S': exceptionII},
-            partitionKey: { 'S': accountId },
-            sortKey: {'S': date }
+            partitionKey: { 'S': accountId + "#" + dateString },
+            sortKey: {'S': date },
+            deviceID: {'S': deviceId}
         };
 
         var put_request = {
