@@ -40,7 +40,7 @@ router.post('/upload/:accountid', upload.single('file'), function(req, res) {
     return;
 });
 
-/* GET home page. */
+/* post logs */
 router.post('/:accountid/:deviceid', function(req, res, next) {
     var accountId = req.params.accountid;
     var deviceId = req.params.deviceid;
@@ -53,6 +53,24 @@ router.post('/:accountid/:deviceid', function(req, res, next) {
 
     processItems(items, res, accountId, deviceId);
     return;
+});
+
+/* Fetch logs based on date window */
+router.get('/:accountid/:start/:end', function(req, res) {
+    var accountId = req.params.accountid;
+    var startDate = Date.parse(req.params.start);
+    var endDate = Date.parse(req.params.end);
+
+    if (accountId == null || accountId == undefined || startDate == null || startDate == undefined || endDate == null || endDate == undefined) {
+        console.log(accountId, startDate, endDate);
+        res.status(400).send({"error" : "Invalid/Missing fields - accountId, startDate and endDate are required"});
+        return;
+    }
+
+    var responseList = [];
+
+    utils.fetchItems(accountId + "#" + startDate.toString("yyyy-MM-dd"),
+            accountId + "#" + endDate.toString("yyyy-MM-dd"), null, responseList, res, false, RFID_LOGS_TABLE_NAME);
 });
 
 module.exports = router;
