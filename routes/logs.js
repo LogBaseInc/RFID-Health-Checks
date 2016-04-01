@@ -21,9 +21,8 @@ router.post('/upload/:accountid', upload.single('file'), function(req, res) {
     {
         var blobService = azure.createBlobService();
 
-        blobService.createBlockBlobFromLocalFile('rfid', accountid+'.txt', req.file.path, function(error, result, response) {
+        blobService.createBlockBlobFromLocalFile('rfid', accountid+'_cyclecount.txt', req.file.path, function(error, result, response) {
           if (!error) {
-            // file uploaded
             res.status(200).send();
           }
           else{
