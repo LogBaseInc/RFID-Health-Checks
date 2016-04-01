@@ -48,7 +48,7 @@ module.exports = {
         return DYNAMODB_BATCH_WRITE_LIMIT;
     },
 
-    fetchItems: function(accountId, prevResult, resp_data, res, brief, tableName, startDate, endDate) {
+    fetchItems: function(accountId, prevResult, resp_data, res, brief, tableName, startDate, endDate, metric) {
 
         var attributes = [];
         if (brief) {
@@ -101,6 +101,7 @@ module.exports = {
                 if (data != null && data.Items != null) {
                     for (var idx in data.Items) {
 
+                        // Parse the json. It will be in aws format
                         var DDBJson = data.Items[idx];
                         var parsedJson = {};
                         for (var keys in DDBJson) {
@@ -119,16 +120,29 @@ module.exports = {
                             }
                             parsedJson[keys] = value;
                         }
-
                         resp_data.push(parsedJson);
+
+                        // Metric calculation
+                        metric.count++;
+                        for (var keys in parsedJson) {
+                            if (keys == 'inCycleCount' || keys == 'exceptionI' ||
+                                keys == 'exceptionII' || keys == 'status') {
+                                var value = parsedJson[keys];
+                                if (metric[keys][value] != null && metric[keys][value] != undefined) {
+                                    metric[keys][value]++;
+                                } else {
+                                    metric[keys][value] = 1;
+                                }
+                            }
+                        }
                     }
                 }
 
                 if (data.LastEvaluatedKey == null) {
-                    res.status(200).send(resp_data);
+                    res.status(200).send(metric);
                     return;
                 } else {
-                    this.fetchItems(accountId, data, resp_data, res, brief, tableName, startDate, endDate)
+                    this.fetchItems(accountId, data, resp_data, res, brief, tableName, startDate, endDate, metric)
                 }
             }
         });

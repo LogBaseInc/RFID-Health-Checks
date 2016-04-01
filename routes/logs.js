@@ -62,6 +62,14 @@ router.get('/:accountid/:start/:end', function(req, res) {
     var startDate = Date.parse(req.params.start);
     var endDate = Date.parse(req.params.end);
 
+    var metric = {
+        count: 0,
+        inCycleCount: {},
+        exceptionI: {},
+        exceptionII: {},
+        status: {}
+    };
+
     if (accountId == null || accountId == undefined || startDate == null || startDate == undefined || endDate == null || endDate == undefined) {
         console.log(accountId, startDate, endDate);
         res.status(400).send({"error" : "Invalid/Missing fields - accountId, startDate and endDate are required"});
@@ -71,7 +79,7 @@ router.get('/:accountid/:start/:end', function(req, res) {
     var responseList = [];
     utils.fetchItems(accountId, null,
         responseList, res, false, RFID_LOGS_TABLE_NAME,
-        startDate.toString(dateFormt), endDate.toString(dateFormt)
+        startDate.toString(dateFormt), endDate.toString(dateFormt), metric
     );
 });
 
@@ -146,7 +154,7 @@ function processItems(items, res, accountId, deviceId) {
             item_list = [];
         }
 
-        if (item_list.length == utils.getDynamoDBBatchWriteLimit) {
+        if (item_list.length == utils.getDynamoDBBatchWriteLimit()) {
             utils.batchWrite(item_list, false, res, RFID_LOGS_TABLE_NAME);
             item_list = [];
         }
