@@ -48,28 +48,7 @@ module.exports = {
         return DYNAMODB_BATCH_WRITE_LIMIT;
     },
 
-    parseDDBJson: function (DDBJson) {
-        var parsedJson = {};
-        for (var keys in DDBJson) {
-            var DDBValue = DDBJson[keys];
-            var value = null;
-            var name = Object.keys(DDBValue)[0]
-            switch(name) {
-                case 'S':
-                    value = DDBValue[name];
-                    break;
-                case 'N':
-                    value = parseInt(DDBValue[name]);
-                    break;
-                default:
-                    value = DDBValue[name];
-            }
-            parsedJson[keys] = value;
-        }
-        return parsedJson;
-    },
-
-    fetchItems: function(startAccountId, endAccountId, prevResult, resp_data, res, brief, tableName) {
+    fetchItems: function(accountId, prevResult, resp_data, res, brief, tableName, startDate, endDate) {
 
         var attributes = [];
         if (brief) {
@@ -84,14 +63,22 @@ module.exports = {
             TableName: tableName,
             AttributesToGet: attributes,
             KeyConditions: {
-                'accountId': {
+                'partitionKey': {
+                    ComparisonOperator: 'EQ',
+                    AttributeValueList: [
+                        {
+                            S: accountId
+                        }
+                    ]
+                },
+                'sortKey' : {
                     ComparisonOperator: 'BETWEEN',
                     AttributeValueList: [
                         {
-                            S: startAccountId
+                            S: startDate
                         },
                         {
-                            S: endAccountId
+                            S: endDate
                         }
                     ]
                 }
@@ -113,7 +100,27 @@ module.exports = {
             else {
                 if (data != null && data.Items != null) {
                     for (var idx in data.Items) {
-                        resp_data.push(utils.parseDDBJson(data.Items[idx]))
+
+                        var DDBJson = data.Items[idx];
+                        var parsedJson = {};
+                        for (var keys in DDBJson) {
+                            var DDBValue = DDBJson[keys];
+                            var value = null;
+                            var name = Object.keys(DDBValue)[0]
+                            switch(name) {
+                                case 'S':
+                                    value = DDBValue[name];
+                                    break;
+                                case 'N':
+                                    value = parseInt(DDBValue[name]);
+                                    break;
+                                default:
+                                    value = DDBValue[name];
+                            }
+                            parsedJson[keys] = value;
+                        }
+
+                        resp_data.push(parsedJson);
                     }
                 }
 
@@ -121,9 +128,10 @@ module.exports = {
                     res.status(200).send(resp_data);
                     return;
                 } else {
-                    this.fetchItems(accountId, data, resp_data, res, brief)
+                    this.fetchItems(accountId, data, resp_data, res, brief, tableName, startDate, endDate)
                 }
             }
         });
-    }
+    },
+
 };

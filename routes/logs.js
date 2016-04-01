@@ -11,6 +11,8 @@ var azure_account = process.env.AZURE_STORAGE_ACCOUNT;
 var azure_key = process.env.AZURE_STORAGE_ACCESS_KEY;
 var azure_connection_string = process.env.AZURE_STORAGE_CONNECTION_STRING;
 
+var dateFormt = "yyyy-MM-dd HH:mm:ss";
+
 var RFID_LOGS_TABLE_NAME = "RFID-HEALTH-CHECK-LOGS";
 
 /* Upload file. */
@@ -67,9 +69,10 @@ router.get('/:accountid/:start/:end', function(req, res) {
     }
 
     var responseList = [];
-
-    utils.fetchItems(accountId + "#" + startDate.toString("yyyy-MM-dd"),
-            accountId + "#" + endDate.toString("yyyy-MM-dd"), null, responseList, res, false, RFID_LOGS_TABLE_NAME);
+    utils.fetchItems(accountId, null,
+        responseList, res, false, RFID_LOGS_TABLE_NAME,
+        startDate.toString(dateFormt), endDate.toString(dateFormt)
+    );
 });
 
 module.exports = router;
@@ -122,9 +125,10 @@ function processItems(items, res, accountId, deviceId) {
             inCycleCount: { 'S': inCycleCount},
             exceptionI: { 'S': exceptionI},
             exceptionII: { 'S': exceptionII},
-            partitionKey: { 'S': accountId + "#" + dateString },
-            sortKey: {'S': date },
-            deviceID: {'S': deviceId}
+            partitionKey: { 'S': accountId },
+            sortKey: {'S': dateInt.toString(dateFormt) },
+            deviceId: {'S': deviceId},
+            accountId: {'S': accountId}
         };
 
         var put_request = {
