@@ -4,9 +4,11 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var Firebase = require('firebase');
 
 var logs = require('./routes/logs');
 var users = require('./routes/users');
+var cyclecount = require('./routes/cyclecount');
 
 var app = express();
 
@@ -31,6 +33,7 @@ app.use(function(req, res, next) {
 
 app.use('/log', logs);
 app.use('/users', users);
+app.use('/cyclecount', cyclecount);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
