@@ -26,6 +26,14 @@ var AWS = require('aws-sdk');
 AWS.config.update({region: 'us-east-1'});
 var dynamodb = new AWS.DynamoDB({apiVersion: 'latest'});
 
+router.post('/raw/:accountid/:date', function(req, res) {
+    var accountid = req.params.accountid || " ";
+    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
+    var partitionKey = accountid + '#' + dateString;
+    processCycleCount(req.body, partitionKey, accountid);
+    res.status(200).send();
+});
+
 /* Cycle count file from app. */
 router.post('/:accountid/:date', upload.single('file'), function(req, res) {
     var accountid = req.params.accountid || " ";
@@ -45,7 +53,7 @@ router.post('/:accountid/:date', upload.single('file'), function(req, res) {
 
     rd.on('close', function(data) {
         console.log(values.length);
-        processCycleCount(values, partitionKey);
+        processCycleCount(values, partitionKey, accountid);
 
     });
     res.status(200).send();
@@ -107,14 +115,6 @@ router.get('/:epc', function(req, res) {
     return;
 });
 
-router.post('/:accountid/:date', function(req, res) {
-    var accountid = req.params.accountid || " ";
-    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
-    var partitionKey = accountid + '#' + dateString;
-    processCycleCount(req.body)
-    res.status(200).send();
-});
-
 module.exports = router;
 
 //Functions
@@ -123,9 +123,9 @@ function updateItem(partitionKey, sortKey, updateKeys, tableName) {
     var attributes = {};
     for (var key in updateKeys) {
         if (key == "count") {
-            attributes[key] = { Action: 'ADD', Value : { N : updateKeys[key]}};
+            attributes[key] = { Action: 'ADD', Value : { N : updateKeys[key].toString()}};
         } else {
-            attributes[key] = { Action: 'PUT', Value : { S : updateKeys[key]}};
+            attributes[key] = { Action: 'PUT', Value : { S : updateKeys[key].toString()}};
         }
     }
     var params = {
@@ -148,14 +148,14 @@ function updateItem(partitionKey, sortKey, updateKeys, tableName) {
 }
 
 
-function processCycleCount(items, partitionKey) {
+function processCycleCount(items, partitionKey, accountId) {
     for (var idx in items) {
         var epc = items[idx];
         var upc = utils.epc2upc(epc);
         var sortKey = upc;
-        updateItem(partitionKey, sortKey, { Count : 1}, RFID_CYCLE_COUNT_TABLE);
+        updateItem(partitionKey, sortKey, { count : 1}, RFID_CYCLE_COUNT_TABLE);
         // Fetch item description from Firebase
-        var itemDescRef = firebase_ref.child('/accounts/' + accountid + '/itemfiledetails/upc/' + upc);
+        var itemDescRef = firebase_ref.child('/accounts/' + accountId + '/itemfiledetails/upc/' + upc);
 
         itemDescRef.child('/').once("value", function(snapshot) {
             var itemDesc = snapshot.val();

@@ -140,8 +140,7 @@ module.exports = {
                     }
                 }
 
-                // TODO - REMOVE THIS LENGTH CHECK
-                if (data.LastEvaluatedKey == null || resp_data.length >= 20) {
+                if (data.LastEvaluatedKey == null) {
                     res.status(200).send( { metrics : metric, logs : resp_data });
                     return;
                 } else {
