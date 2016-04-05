@@ -9,6 +9,8 @@ var readline = require('readline');
 var upload = multer({dest: 'uploads/'});
 var Excel = require('exceljs');
 
+var RFID_CYCLE_COUNT_TABLE = "RFID-Cycle-Count";
+
 //Authenticate Firebase
 var firebase_ref = new Firebase(process.env.FIREBASE_URL);
 var firebase_secret = process.env.FIREBASE_SECRET;
@@ -20,9 +22,15 @@ firebase_ref.authWithCustomToken(firebase_secret, function(error, authData) {
     }
 });
 
+var AWS = require('aws-sdk');
+AWS.config.update({region: 'us-east-1'});
+var dynamodb = new AWS.DynamoDB({apiVersion: 'latest'});
+
 /* Cycle count file from app. */
-router.post('/cyclecount/:accountid', upload.single('file'), function(req, res) {
+router.post('/cyclecount/:accountid/:date', upload.single('file'), function(req, res) {
     var accountid = req.params.accountid || " ";
+    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
+    var partitionKey = accountid + '#' + dateString;
    
     var rd = readline.createInterface({
         input: fs.createReadStream(req.file.path),
@@ -37,6 +45,15 @@ router.post('/cyclecount/:accountid', upload.single('file'), function(req, res) 
 
     rd.on('close', function(data) {
         console.log(values.length);
+        for (var idx in values) {
+            var epc = values[idx];
+            var upc = utils.epc2upc(epc);
+            var sortKey = upc;
+            updateItem(partitionKey, sortKey, { Count : 1}, RFID_CYCLE_COUNT_TABLE);
+
+            // Fetch item description from Firebase
+
+        }
     });
 
     res.status(200).send();
@@ -89,4 +106,43 @@ router.post('/itemref/:accountid', upload.single('file'), function(req, res) {
     return;
 });
 
+router.get('/:epc', function(req, res) {
+    var epc = req.params.epc;
+    res.status(200).send({
+        epc2upc : utils.epc2upc(epc),
+        sgtin960 : utils.epc2upcV1(epc)
+    });
+    return;
+});
+
 module.exports = router;
+
+//Functions
+
+function updateItem(partitionKey, sortKey, updateKeys, tableName) {
+    var attributes = {};
+    for (var key in updateKeys) {
+        if (key == "count") {
+            attributes[key] = { Action: 'ADD', Value : { N : updateKeys[key]}};
+        } else {
+            attributes[key] = { Action: 'PUT', Value : { S : updateKeys[key]}};
+        }
+    }
+    var params = {
+        Key: {
+            partitionKey : {
+                S: partitionKey
+            },
+            sortKey : {
+                S: sortKey
+            }
+        },
+        TableName: tableName,
+        AttributeUpdates: attributes
+    };
+
+    dynamodb.updateItem(params, function(err, data) {
+        if (err) console.log(err, err.stack);
+        else     console.log(data);
+    });
+}
