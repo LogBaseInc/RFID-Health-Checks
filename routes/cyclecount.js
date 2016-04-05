@@ -34,33 +34,6 @@ router.post('/raw/:accountid/:date', function(req, res) {
     res.status(200).send();
 });
 
-/* Cycle count file from app. */
-router.post('/:accountid/:date', upload.single('file'), function(req, res) {
-    var accountid = req.params.accountid || " ";
-    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
-    var partitionKey = accountid + '#' + dateString;
-   
-    var rd = readline.createInterface({
-        input: fs.createReadStream(req.file.path),
-        output: process.stdout,
-        terminal: false
-    });
-
-    var values=[];
-    rd.on('line', function(line) {
-        values.push(line);
-    });
-
-    rd.on('close', function(data) {
-        console.log(values.length);
-        processCycleCount(values, partitionKey, accountid);
-
-    });
-    res.status(200).send();
-    return;
-});
-
-
 /* Upload item ref file */
 router.post('/itemref/:accountid', upload.single('file'), function(req, res) {
     var accountid = req.params.accountid || " ";
@@ -106,6 +79,32 @@ router.post('/itemref/:accountid', upload.single('file'), function(req, res) {
     return;
 });
 
+/* Cycle count file from app. */
+router.post('/:accountid/:date', upload.single('file'), function(req, res) {
+    var accountid = req.params.accountid || " ";
+    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
+    var partitionKey = accountid + '#' + dateString;
+   
+    var rd = readline.createInterface({
+        input: fs.createReadStream(req.file.path),
+        output: process.stdout,
+        terminal: false
+    });
+
+    var values=[];
+    rd.on('line', function(line) {
+        values.push(line);
+    });
+
+    rd.on('close', function(data) {
+        console.log(values.length);
+        processCycleCount(values, partitionKey, accountid);
+
+    });
+    res.status(200).send();
+    return;
+});
+
 router.get('/:epc', function(req, res) {
     var epc = req.params.epc;
     res.status(200).send({
@@ -115,6 +114,14 @@ router.get('/:epc', function(req, res) {
     return;
 });
 
+router.get('/:accountid/:date/:threshold', function(req, res) {
+    var accountid = req.params.accountid || " ";
+    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
+    var partitionKey = accountid + '#' + dateString;
+    var threshold = req.params.threshold;
+    var resp_data = [];
+    fetchItems(partitionKey, null, resp_data, res, threshold);
+});
 module.exports = router;
 
 //Functions
@@ -143,7 +150,6 @@ function updateItem(partitionKey, sortKey, updateKeys, tableName) {
 
     dynamodb.updateItem(params, function(err, data) {
         if (err) console.log(err, err.stack);
-        else     console.log(data);
     });
 }
 
@@ -178,3 +184,85 @@ function processCycleCount(items, partitionKey, accountId) {
         }, { sortKey : sortKey, partitionKey : partitionKey});
     }
 };
+
+
+function fetchItems(partitionKey, prevResult, resp_data, res, threshold) {
+
+    console.log(partitionKey, threshold);
+
+    var attributes = ['itemNumber', 'description', 'count'];
+
+    var params = {
+        TableName: RFID_CYCLE_COUNT_TABLE,
+        AttributesToGet: attributes,
+        KeyConditions: {
+            'partitionKey': {
+                ComparisonOperator: 'EQ',
+                AttributeValueList: [
+                    {
+                        S: partitionKey
+                    }
+                ]
+            }
+        },
+        QueryFilter: {
+            'count': {
+                ComparisonOperator: 'LE',
+                AttributeValueList: [
+                    {
+                        S: threshold.toString()
+                    }
+                ]
+            }
+        },
+        ScanIndexForward: true,
+        Select: 'SPECIFIC_ATTRIBUTES'
+    };
+
+    if (prevResult != null && prevResult['LastEvaluatedKey'] != null) {
+        params['ExclusiveStartKey'] = prevResult['LastEvaluatedKey'];
+    }
+
+    dynamodb.query(params, function (err, data) {
+        if (err) {
+            console.log(err);
+            res.status(400).send(err);
+            return;
+        }
+        else {
+            console.log(data);
+            if (data != null && data.Items != null) {
+                for (var idx in data.Items) {
+
+                    // Parse the json. It will be in aws format
+                    var DDBJson = data.Items[idx];
+                    var parsedJson = {};
+                    for (var keys in DDBJson) {
+                        var DDBValue = DDBJson[keys];
+                        var value = null;
+                        var name = Object.keys(DDBValue)[0]
+                        switch (name) {
+                            case 'S':
+                                value = DDBValue[name];
+                                break;
+                            case 'N':
+                                value = parseInt(DDBValue[name]);
+                                break;
+                            default:
+                                value = DDBValue[name];
+                        }
+                        parsedJson[keys] = value;
+                    }
+                    resp_data.push(parsedJson);
+                }
+            }
+
+            if (data.LastEvaluatedKey == null) {
+                res.status(200).send( resp_data );
+                return;
+            } else {
+                fetchItems(accountId, prevResult, resp_data, res, threshold);
+            }
+        }
+    });
+}
