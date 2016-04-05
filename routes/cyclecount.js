@@ -27,7 +27,7 @@ AWS.config.update({region: 'us-east-1'});
 var dynamodb = new AWS.DynamoDB({apiVersion: 'latest'});
 
 /* Cycle count file from app. */
-router.post('/cyclecount/:accountid/:date', upload.single('file'), function(req, res) {
+router.post('/:accountid/:date', upload.single('file'), function(req, res) {
     var accountid = req.params.accountid || " ";
     var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
     var partitionKey = accountid + '#' + dateString;
@@ -45,17 +45,9 @@ router.post('/cyclecount/:accountid/:date', upload.single('file'), function(req,
 
     rd.on('close', function(data) {
         console.log(values.length);
-        for (var idx in values) {
-            var epc = values[idx];
-            var upc = utils.epc2upc(epc);
-            var sortKey = upc;
-            updateItem(partitionKey, sortKey, { Count : 1}, RFID_CYCLE_COUNT_TABLE);
+        processCycleCount(values, partitionKey);
 
-            // Fetch item description from Firebase
-
-        }
     });
-
     res.status(200).send();
     return;
 });
@@ -115,6 +107,14 @@ router.get('/:epc', function(req, res) {
     return;
 });
 
+router.post('/:accountid/:date', function(req, res) {
+    var accountid = req.params.accountid || " ";
+    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
+    var partitionKey = accountid + '#' + dateString;
+    processCycleCount(req.body)
+    res.status(200).send();
+});
+
 module.exports = router;
 
 //Functions
@@ -146,3 +146,35 @@ function updateItem(partitionKey, sortKey, updateKeys, tableName) {
         else     console.log(data);
     });
 }
+
+
+function processCycleCount(items, partitionKey) {
+    for (var idx in items) {
+        var epc = items[idx];
+        var upc = utils.epc2upc(epc);
+        var sortKey = upc;
+        updateItem(partitionKey, sortKey, { Count : 1}, RFID_CYCLE_COUNT_TABLE);
+        // Fetch item description from Firebase
+        var itemDescRef = firebase_ref.child('/accounts/' + accountid + '/itemfiledetails/upc/' + upc);
+
+        itemDescRef.child('/').once("value", function(snapshot) {
+            var itemDesc = snapshot.val();
+            if (itemDesc != null && itemDesc != undefined) {
+                var updateKeys = {};
+                var descAvailable = false;
+                if (itemDesc.itemDesc != null) {
+                    updateKeys['description'] = itemDesc.itemDesc;
+                    descAvailable = true;
+                }
+                if (itemDesc.itemNumber != null) {
+                    updateKeys['itemNumber'] = itemDesc.itemNumber;
+                    descAvailable = true;
+                }
+
+                if (descAvailable) {
+                    updateItem(this.partitionKey, this.sortKey, updateKeys, RFID_CYCLE_COUNT_TABLE);
+                }
+            }
+        }, { sortKey : sortKey, partitionKey : partitionKey});
+    }
+};
