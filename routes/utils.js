@@ -269,7 +269,7 @@ module.exports = {
         }
 
         console.log(tagType, headerValue);
-        return [tagType, headerValue, upc];
+        return upc;
     },
 
 

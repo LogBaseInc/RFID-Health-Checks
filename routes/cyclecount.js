@@ -28,7 +28,7 @@ var dynamodb = new AWS.DynamoDB({apiVersion: 'latest'});
 
 router.post('/raw/:accountid/:date', function(req, res) {
     var accountid = req.params.accountid || " ";
-    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
+    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd HH:mm:ss");
     var partitionKey = accountid + '#' + dateString;
     processCycleCount(req.body, partitionKey, accountid);
     res.status(200).send();
@@ -82,7 +82,7 @@ router.post('/itemref/:accountid', upload.single('file'), function(req, res) {
 /* Cycle count file from app. */
 router.post('/:accountid/:date', upload.single('file'), function(req, res) {
     var accountid = req.params.accountid || " ";
-    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
+    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd HH:mm:ss");
     var partitionKey = accountid + '#' + dateString;
    
     var rd = readline.createInterface({
@@ -116,7 +116,7 @@ router.get('/:epc', function(req, res) {
 
 router.get('/:accountid/:date/:threshold', function(req, res) {
     var accountid = req.params.accountid || " ";
-    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd mm:HH:ss");
+    var dateString = Date.parse(req.params.date).toString("yyyy-MM-dd HH:mm:ss");
     var partitionKey = accountid + '#' + dateString;
     var threshold = req.params.threshold;
     var resp_data = [];
@@ -157,31 +157,33 @@ function updateItem(partitionKey, sortKey, updateKeys, tableName) {
 function processCycleCount(items, partitionKey, accountId) {
     for (var idx in items) {
         var epc = items[idx];
-        var upc = utils.epc2upc(epc);
-        var sortKey = upc;
-        updateItem(partitionKey, sortKey, { count : 1}, RFID_CYCLE_COUNT_TABLE);
-        // Fetch item description from Firebase
-        var itemDescRef = firebase_ref.child('/accounts/' + accountId + '/itemfiledetails/upc/' + upc);
+        var upc = utils.epc2upcV1(epc);
+        if(upc != null) {
+            var sortKey = upc.toString();
+            updateItem(partitionKey, sortKey, { count : 1}, RFID_CYCLE_COUNT_TABLE);
+            // Fetch item description from Firebase
+            var itemDescRef = firebase_ref.child('/accounts/' + accountId + '/itemfiledetails/upc/' + upc);
 
-        itemDescRef.child('/').once("value", function(snapshot) {
-            var itemDesc = snapshot.val();
-            if (itemDesc != null && itemDesc != undefined) {
-                var updateKeys = {};
-                var descAvailable = false;
-                if (itemDesc.itemDesc != null) {
-                    updateKeys['description'] = itemDesc.itemDesc;
-                    descAvailable = true;
-                }
-                if (itemDesc.itemNumber != null) {
-                    updateKeys['itemNumber'] = itemDesc.itemNumber;
-                    descAvailable = true;
-                }
+            itemDescRef.child('/').once("value", function(snapshot) {
+                var itemDesc = snapshot.val();
+                if (itemDesc != null && itemDesc != undefined) {
+                    var updateKeys = {};
+                    var descAvailable = false;
+                    if (itemDesc.itemDesc != null) {
+                        updateKeys['description'] = itemDesc.itemDesc;
+                        descAvailable = true;
+                    }
+                    if (itemDesc.itemNumber != null) {
+                        updateKeys['itemNumber'] = itemDesc.itemNumber;
+                        descAvailable = true;
+                    }
 
-                if (descAvailable) {
-                    updateItem(this.partitionKey, this.sortKey, updateKeys, RFID_CYCLE_COUNT_TABLE);
+                    if (descAvailable) {
+                        updateItem(this.partitionKey, this.sortKey, updateKeys, RFID_CYCLE_COUNT_TABLE);
+                    }
                 }
-            }
-        }, { sortKey : sortKey, partitionKey : partitionKey});
+            }, { sortKey : sortKey, partitionKey : partitionKey});
+        }
     }
 };
 
