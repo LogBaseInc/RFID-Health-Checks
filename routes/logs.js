@@ -42,9 +42,11 @@ router.post('/upload/:accountid', upload.single('file'), function(req, res) {
 });
 
 /* post logs */
-router.post('/:accountid/:deviceid', function(req, res, next) {
+router.post('/audit/:accountid/:deviceid/:version', function(req, res, next) {
     var accountId = req.params.accountid;
     var deviceId = req.params.deviceid;
+    var version = req.params.version;
+
     var items = req.body;
 
     if (items.length == 0) {
@@ -52,7 +54,7 @@ router.post('/:accountid/:deviceid', function(req, res, next) {
         return;
     }
 
-    processItems(items, res, accountId, deviceId);
+    processItems(items, res, accountId, deviceId, version);
     return;
 });
 
@@ -85,11 +87,11 @@ router.get('/:accountid/:start/:end', function(req, res) {
 
 module.exports = router;
 
-function processItems(items, res, accountId, deviceId) {
+function processItems(items, res, accountId, deviceId, version) {
 
     var item_list = [];
     for (var idx in items) {
-        //Device,Datetime,UPC,EPC URI,TID,Tag Type,EPC,Extracted UPC,Math,Cycle Count,Exception Tag1,Exception Tag2
+        //V1: Device,Store Area,Datetime,UPC,EPC URI,TID,Tag Type,EPC,Extracted UPC,Math,Cycle Count,Exception Tag1,Exception Tag2
         var tokens = items[idx].split(",");
         if (tokens.length < 10) {
             res.status(400).send({"error" : "Missing fields", "content" : items[idx]});
@@ -97,17 +99,18 @@ function processItems(items, res, accountId, deviceId) {
         }
 
         var device = tokens[0] || "nil";
-        var date = tokens[1] || "nil";
-        var upc = tokens[2] || "nil";
-        var epcUri = tokens[3] || "nil";
-        var tid = tokens[4] || "nil";
-        var tagType = tokens[5] || "nil";
-        var epc = tokens[6] || "nil";
-        var extractedUpc = tokens[7] || "nil";
-        var status = tokens[8] || "nil";
-        var inCycleCount = tokens[9] || "nil";
-        var exceptionI = tokens[10] || "nil";
-        var exceptionII = tokens[11] || "nil";
+        var storeArea = tokens[1] || "nil";
+        var date = tokens[2] || "nil";
+        var upc = tokens[3] || "nil";
+        var epcUri = tokens[4] || "nil";
+        var tid = tokens[5] || "nil";
+        var tagType = tokens[6] || "nil";
+        var epc = tokens[7] || "nil";
+        var extractedUpc = tokens[8] || "nil";
+        var status = tokens[9] || "nil";
+        var inCycleCount = tokens[10] || "nil";
+        var exceptionI = tokens[11] || "nil";
+        var exceptionII = tokens[12] || "nil";
 
         var dateInt = Date.parse(date);
         var dateString = "";
@@ -136,7 +139,8 @@ function processItems(items, res, accountId, deviceId) {
             partitionKey: { 'S': accountId },
             sortKey: {'S': dateInt.toString(dateFormt) },
             deviceId: {'S': deviceId},
-            accountId: {'S': accountId}
+            accountId: {'S': accountId},
+            storeArea : {'S': storeArea}
         };
 
         var put_request = {

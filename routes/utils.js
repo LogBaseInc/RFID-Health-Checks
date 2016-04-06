@@ -54,11 +54,11 @@ module.exports = {
 
         var attributes = [];
         if (brief) {
-            attributes = ['device', 'date', 'upc', 'epcUri', 'tid', 'tagType', 'epc',
+            attributes = ['device', 'storeArea', 'date', 'upc', 'epcUri', 'tid', 'tagType', 'epc',
                 'extractedUpc', 'status', 'inCycleCount', 'exceptionI', 'exceptionII']
         } else {
-            attributes = ['device', 'date', 'upc', 'epcUri', 'tid', 'tagType', 'epc',
-                'extractedUpc', 'status', 'inCycleCount', 'exceptionI', 'exceptionII'];
+            attributes = ['device', 'storeArea', 'date', 'upc', 'epcUri', 'tid', 'tagType', 'epc',
+                'extractedUpc', 'status', 'inCycleCount','exceptionI', 'exceptionII'];
         }
 
         var params = {
