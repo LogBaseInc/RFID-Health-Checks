@@ -96,16 +96,16 @@ function processItems(items, res, accountId, deviceId) {
             return;
         }
 
-        var device = tokens[0];
-        var date = tokens[1];
-        var upc = tokens[2];
-        var epcUri = tokens[3];
-        var tid = tokens[4];
-        var tagType = tokens[5];
-        var epc = tokens[6];
-        var extractedUpc = tokens[7];
-        var status = tokens[8];
-        var inCycleCount = tokens[9];
+        var device = tokens[0] || "nil";
+        var date = tokens[1] || "nil";
+        var upc = tokens[2] || "nil";
+        var epcUri = tokens[3] || "nil";
+        var tid = tokens[4] || "nil";
+        var tagType = tokens[5] || "nil";
+        var epc = tokens[6] || "nil";
+        var extractedUpc = tokens[7] || "nil";
+        var status = tokens[8] || "nil";
+        var inCycleCount = tokens[9] || "nil";
         var exceptionI = tokens[10] || "nil";
         var exceptionII = tokens[11] || "nil";
 
