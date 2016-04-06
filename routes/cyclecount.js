@@ -192,7 +192,7 @@ function fetchItems(partitionKey, prevResult, resp_data, res, threshold) {
 
     console.log(partitionKey, threshold);
 
-    var attributes = ['itemNumber', 'description', 'count'];
+    var attributes = ['itemNumber', 'description', 'count', 'sortKey'];
 
     var params = {
         TableName: RFID_CYCLE_COUNT_TABLE,
@@ -212,7 +212,7 @@ function fetchItems(partitionKey, prevResult, resp_data, res, threshold) {
                 ComparisonOperator: 'LE',
                 AttributeValueList: [
                     {
-                        S: threshold.toString()
+                        N: threshold.toString()
                     }
                 ]
             }
