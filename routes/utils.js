@@ -308,7 +308,7 @@ module.exports = {
 
         var partitionTable = partitionTableArray;
 
-        var partitionValue = math.Bin2Dec(epcBinary.substr(11, 3));
+        var partitionValue = parseInt(math.Bin2Dec(epcBinary.substr(11, 3)));
         console.log("Partition Value " + partitionValue);
 
         var companyPrefix = math.Bin2Dec(epcBinary.substr(14, partitionTable[partitionValue][0]));
@@ -384,7 +384,7 @@ module.exports = {
 
         itemRef = math.pad(itemRef, 6);
         var upc = companyPrefix.toString() + itemRef.toString();
-        console.log("UPC " + upc);
+        console.log("UPC, comp, item " + upc, companyPrefix, itemRef);
         return upc;
     },
 
