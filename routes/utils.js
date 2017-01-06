@@ -20,7 +20,7 @@ var dynamodb = new AWS.DynamoDB({apiVersion: 'latest'});
 
 var DYNAMODB_BATCH_WRITE_LIMIT = 20;
 
-module.exports = {
+var self = module.exports = {
 
     log: function (message, tags) {
         client.log(message, tags);
@@ -144,7 +144,7 @@ module.exports = {
                     res.status(200).send( { metrics : metric, logs : resp_data });
                     return;
                 } else {
-                    this.fetchItems(accountId, data, resp_data, res, brief, tableName, startDate, endDate, metric)
+                    self.fetchItems(accountId, data, resp_data, res, brief, tableName, startDate, endDate, metric)
                 }
             }
         });
@@ -220,18 +220,18 @@ module.exports = {
         }
         else if (headerValue == "00101101") {
             tagType = "GSRN-96";
-            upc = this.gsrn96Decode(EPCbinary);
+            upc = self.gsrn96Decode(EPCbinary);
         }
         else if (headerValue == "00101101") {
             tagType = "DoD-96";
         }
         else if (headerValue == "00110000") {
             tagType = "SGTIN-96";
-            upc = this.sgtin96Decode(EPCbinary);
+            upc = self.sgtin96Decode(EPCbinary);
         }
         else if (headerValue == "00111011") {
             tagType = "VueSerAuth";
-            upc = this.VueSerAuthDecode(EPCbinary);
+            upc = self.VueSerAuthDecode(EPCbinary);
         }
         else if (headerValue == "00110001") {
             tagType = "SSCC-96";
@@ -247,7 +247,7 @@ module.exports = {
         }
         else if (headerValue == "00110101") {
             tagType = "GID-96";
-            upc = this.gid96Decode(EPCbinary);
+            upc = self.gid96Decode(EPCbinary);
         }
         else if (headerValue == "00110110") {
             tagType = "SGTIN-198";
@@ -319,7 +319,7 @@ module.exports = {
         serviceReference = math.pad(serviceReference, 5 + partitionValue);
 
         var upc = companyPrefix.toString() + serviceReference.toString();
-        upc = upc + this.calculateCheckDigit(upc);
+        upc = upc + self.calculateCheckDigit(upc);
         console.log("UPC " + upc);
         return upc;
     },
@@ -439,13 +439,13 @@ module.exports = {
         } catch (ex) {
             if (itemReference.length == 1)
             {
-                upc = itemReference.toString() +  companyPrefix.toString() + this.calculateCheckDigit(upc);
+                upc = itemReference.toString() +  companyPrefix.toString() + self.calculateCheckDigit(upc);
             }
         }
 
         //To calculate the check digit for GTIN 14 (GTIN 8, GTIN 12, & GTIN 13 need to be padded with 0s)
         upc = math.pad(upc, 13);
-        upc = upc + this.calculateCheckDigit(upc);
+        upc = upc + self.calculateCheckDigit(upc);
         console.log("UPC " + upc);
         return upc;
     }
