@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "firebase-rfidapp",
+  "private_key_id": "af770c09ef45303362660416ef827af4fdfd9534",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCg8CvR3/KYnZzb\nvdp5mmq3FlZowQiKz6K58E3S/DU6FrBY9OcO4d/uIxNWk+WdQAKTMyzWjsIVcJeA\nRdVC0fSFiMKtjfzV2xVoPyxeiRH/MMTcdwPkSsD4qS2KER512Z3N8xC/dwMHzIar\nUkgyWKXPNZMllHl68CFTQabrICO3+0bWeCWEzP70lsXejaEJZzXmBZQY7OkmtHMd\noLjcSibGvbmA2lFGK00jfJpa8FSgB6OQ9Yf+KljxhgcgAk5i7WflueGPWrTQX/6H\nFB0Pzc5nOwEbIZ7vMAst8hH/mm+Sb4d2XtnFQ3vX7S9iuxeQcyiIYEukXR3MPFZV\nLsrIS901AgMBAAECggEAB5XqatUEaT8ckprrPkoR95k872kRzwEkaWEzOdubYqaJ\nH1hDv8bTuDS9B5qm+vd2Z5vE5EQMT9hju68O8zxUKyscCfQkU6wk4SoBHF+XkpCo\n5r9RVqRTXiUTOWu/JMziDEAFrRCd+vMf8dlJ/91/yzl6Ow45f5rr5zGz/WchZ92D\n+4TPn9dSikS79k8HzM76EPWX86b0iAUCi/Uhf7myWKMbVkS8gY1FLc3RJ+W5JJAo\nWxIJ9fVgygkur7gPRmXysYENROY2lx9942ruOpkJsbo6PnJ8aPP12Uqs9dbWSVxh\nJsBCPH2MLNRBUmLDADzCGBuJ96iyGyeJQJCMwL7QzQKBgQDVhpzzdKAb55IfDwmk\ncM9smPD8kf++eoDSuU/nPVBrSe2VrrJ8t3+wq3ZFq8Yl9u+LmeiZ/uCqsNca8NdE\nAbxyxYP9BRDbasLmLPiiw580phqPCQxGNfRk8UgzLIzligE7v9U2psJHaI6fA1JS\niQPf1vm/7E/dLgR5oFAcn0KW9wKBgQDA86I/rve7jbMqqSUrRJOR8jHv2eRIrOcW\nE59YosWD7w9K6Bx+whI7f9C21OH+vDaZJdeORvJEzT29Hp0+DjcVKS6eWW9vCnHV\nZY8eA6UBHl4GHKF/4w3WCOgBbGNN2XfzG/E7TET7jUBikp5wvts+A2ThzzOkk84+\n/NJOP/IGMwKBgFuTRv7WttAg6bcuUNlYlG0jzr7TstYzXcqCNXWcA0BwTVfTu7Ln\nU/kmICxTNkET/bpmgK6C9EHgY/Cm9/uvru2eLjQ2lvszd3EWOnA766y9zEgp/jyi\naTVdkbR419id7ld8t2mf7VSI0Bn8Z7MEFkhKv4QDSmE2mi67hYAxAXMTAoGAXTfX\nVQkE6nmk66FYMbUpzkLCWWxdW7cc1Y+ZVksdPYZLTxcgXSUJhfFUNmBW5qirgAXG\nRBiGhzLY9vtJYGehuPlyalIvAeh74mr0X73HA+lV54IBjDV3w8X9wGJK/5tm1e7T\n9p/8W8N8LaNEJJgwd59QJ7/g5Uv7QncGa4N9O/0CgYA6LAbpdoKUZkwvc29a+GmH\n//h3Va7YbGmN9ewBPE0iTJIS5miQIN0BX1ueIEedDhnk+1HWTvfQ3blfWMvGxJlw\nTVmsxKOh3mxJHqxkchpy41pnMyi2qpvTUE+kbiWh9d2sAvxnqZXd+s32cwHDSTHH\n86Vrwm8151KbndvDUK2mbw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-rfidapp@appspot.gserviceaccount.com",
+  "client_id": "",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-rfidapp%40appspot.gserviceaccount.com"
+}

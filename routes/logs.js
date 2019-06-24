@@ -1,45 +1,84 @@
 var express = require('express');
 var router = express.Router();
-
+var Multer = require('multer');
+const multer = Multer({
+storage: Multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024 // no larger than 10mb, you can change as needed.
+    }
+});
+  
 var utils = require("./utils.js");
 require('datejs');
-var multer  = require('multer');
-var upload = multer({dest: 'uploads/'});
-var azure = require('azure-storage');
-
-var azure_account = process.env.AZURE_STORAGE_ACCOUNT;
-var azure_key = process.env.AZURE_STORAGE_ACCESS_KEY;
-var azure_connection_string = process.env.AZURE_STORAGE_CONNECTION_STRING;
+var firebase = require('firebase-admin');
+var app = firebase.initializeApp({
+    apiKey: "AIzaSyCVMhNe8GrrXhBStq1ANovFAZKG7V-OZVI",
+    authDomain: "rfidapp.firebaseapp.com",
+    databaseURL: "https://rfidapp.firebaseio.com",
+    projectId: "firebase-rfidapp",
+    storageBucket: "firebase-rfidapp.appspot.com",
+    messagingSenderId: "443491623158",
+    appId: "1:443491623158:web:57bbd31c2a22c63e"
+});
+const { Storage } = require('@google-cloud/storage');
+var storage = new Storage({
+    projectId: 'firebase-rfidapp'
+});
+var bucket = storage.bucket('firebase-rfidapp.appspot.com');
 
 var dateFormt = "yyyy-MM-dd HH:mm:ss";
 
 var RFID_LOGS_TABLE_NAME = "RFID-HEALTH-CHECK-LOGS";
 
 /* Upload file. */
-router.post('/upload/:accountid', upload.single('file'), function(req, res) {
+router.post('/upload/:accountid', multer.single('file'), (req, res) => {
     var accountid = req.params.accountid || " ";
-    console.log(accountid, req.file.path);
-    try
-    {
-        var blobService = azure.createBlobService();
+    const file = bucket.file('webUploadedCyclecount/'+accountid+'_cyclecount.txt');
+    const stream = file.createWriteStream({
+        metadata: {
+        contentType: req.file.mimetype
+        },
+        resumable: false
+    });
 
-        blobService.createBlockBlobFromLocalFile('rfid', accountid+'_cyclecount.txt', req.file.path, function(error, result, response) {
-          if (!error) {
-            res.status(200).send();
-          }
-          else{
-            console.log(error);
-            res.status(400).send({"error" : error});
-          }
+    stream.on('error', (err) => {
+        res.status(400).send(err);
+    });
 
-        });
-    }
-    catch(ex){
-        console.log(ex);
-        res.status(400).send({"error" : error});
-    }
+    stream.on('finish', () => {
+        res.status(200).send();
+    });
+
+    stream.end(req.file.buffer);
     return;
 });
+
+const uploadImageToStorage = (file, newFileName) => {
+    return new Promise((resolve, reject) => {
+      if (!file) {
+        reject('No image file');
+      }  
+      let fileUpload = bucket.file(newFileName);
+  
+      const blobStream = fileUpload.createWriteStream({
+        metadata: {
+          contentType: file.mimetype
+        }
+      });
+  
+      blobStream.on('error', (error) => {
+        reject('Something is wrong! Unable to upload at the moment.');
+      });
+  
+      blobStream.on('finish', () => {
+        // The public URL can be used to directly access the file via HTTP.
+        const url = format(`https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`);
+        resolve(url);
+      });
+  
+      blobStream.end(file.buffer);
+    });
+}
 
 /* post logs */
 router.post('/audit/:accountid/:deviceid/:version', function(req, res, next) {
